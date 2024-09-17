@@ -4,11 +4,14 @@ import com.example.userservice.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -32,13 +35,10 @@ public class WebSecurityNew {
     public static final String SUBNET = "/32";
     public static final IpAddressMatcher ALLOWED_IP_ADDRESS_MATCHER = new IpAddressMatcher(ALLOWED_IP_ADDRESS + SUBNET);
 
-    public WebSecurityNew(Environment env
-            , UserService userService
-//            , BCryptPasswordEncoder bCryptPasswordEncoder
-    ) {
+    public WebSecurityNew(Environment env, UserService userService, BCryptPasswordEncoder bCryptPasswordEncoder) {
         this.env = env;
         this.userService = userService;
-//        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
     @Bean
@@ -46,7 +46,7 @@ public class WebSecurityNew {
         // Configure AuthenticationManagerBuilder
         AuthenticationManagerBuilder authenticationManagerBuilder =
                 http.getSharedObject(AuthenticationManagerBuilder.class);
-//        authenticationManagerBuilder.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder);
+        authenticationManagerBuilder.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder);
 
         AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
 
@@ -62,16 +62,16 @@ public class WebSecurityNew {
                                 .requestMatchers(new AntPathRequestMatcher("/swagger-ui/**")).permitAll()
                                 .requestMatchers(new AntPathRequestMatcher("/swagger-resources/**")).permitAll()
                                 .requestMatchers(new AntPathRequestMatcher("/v3/api-docs/**")).permitAll()
-//                                .requestMatchers("/**").access(this::hasIpAddress)
+//                        .requestMatchers("/**").access(this::hasIpAddress)
                                 .requestMatchers("/**").access(
-                                        new WebExpressionAuthorizationManager("hasIpAddress('localhost') or hasIpAddress('127.0.0.1') or hasIpAddress('172.30.96.94')")) // host pc ip address
+                                        new WebExpressionAuthorizationManager("hasIpAddress('localhost') or hasIpAddress('127.0.0.1') or hasIpAddress('192.168.0.35')")) // host pc ip address
                                 .anyRequest().authenticated()
                 )
                 .authenticationManager(authenticationManager)
                 .sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-//        http.addFilter(getAuthenticationFilter(authenticationManager));
+        http.addFilter(getAuthenticationFilter(authenticationManager));
         http.headers((headers) -> headers.frameOptions((frameOptions) -> frameOptions.sameOrigin()));
 
         return http.build();
@@ -81,8 +81,8 @@ public class WebSecurityNew {
         return new AuthorizationDecision(ALLOWED_IP_ADDRESS_MATCHER.matches(object.getRequest()));
     }
 
-//    private AuthenticationFilterNew getAuthenticationFilter(AuthenticationManager authenticationManager) throws Exception {
-//        return new AuthenticationFilterNew(authenticationManager, userService, env);
-//    }
+    private AuthenticationFilterNew getAuthenticationFilter(AuthenticationManager authenticationManager) throws Exception {
+        return new AuthenticationFilterNew(authenticationManager, userService, env);
+    }
 
 }
