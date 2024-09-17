@@ -8,4 +8,7 @@ spring:
     config:
       server:
         git:
-          url: file:///Users/Admin/IdeaProjects/toy-msa
+#          uri: file:\Users\Admin\IdeaProjects\config
+          uri: https://github.com/Jseongwon/spring-msa-config.git
+#          username: [your username]
+#          password: [your password]
